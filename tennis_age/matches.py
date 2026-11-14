@@ -3,6 +3,9 @@ import re
 from urllib.request import Request, urlopen
 import ast
 import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urlparse, parse_qs
 
 PLAYER_INFO = {
     "serenawilliams": {
@@ -76,10 +79,15 @@ def _clean_matches(matches, birth_date):
 def _get_player_info(player_name):
     normalized = _normalize_name(player_name)
 
-    if normalized not in PLAYER_INFO:
-        raise ValueError(f"Player '{player_name}' was not found.")
+    if normalized in PLAYER_INFO:
+        return PLAYER_INFO[normalized]
 
-    return PLAYER_INFO[normalized]
+    for tour in ("atp", "wta"):
+        info = _search_rankings(normalized, tour)
+        if info is not None:
+            return info
+
+    raise ValueError(f"Player '{player_name}' was not found.")
 
 def get_player_matches(player_name):
     info = _get_player_info(player_name)
@@ -90,4 +98,23 @@ def get_player_matches(player_name):
     birth_date = pd.Timestamp(info["birth_date"])
 
     return _clean_matches(matches, birth_date)
+
+def _search_rankings(player_name, tour):
+    url = f"https://www.tennisabstract.com/reports/{tour}Rankings.html"
+    response = requests.get(url, timeout=30)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    for row in soup.select("tr"):
+        cells = row.find_all("td")
+        if len(cells) < 4:
+            continue
+        link = cells[1].find("a", href=True)
+        if not link or _normalize_name(link.get_text()) != player_name:
+            continue
+        slug = parse_qs(urlparse(link["href"]).query).get("p", [])
+        if slug:
+            return {"url_name": slug[0], "birth_date": cells[3].get_text(strip=True)}
+    return None
+
 
