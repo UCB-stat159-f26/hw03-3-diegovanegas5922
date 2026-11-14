@@ -4,6 +4,17 @@ from urllib.request import Request, urlopen
 import ast
 import pandas as pd
 
+PLAYER_INFO = {
+    "serenawilliams": {
+        "url_name": "SerenaWilliams",
+        "birth_date": "1981-09-26",
+    },
+    "rafaelnadal": {
+        "url_name": "RafaelNadal",
+        "birth_date": "1986-06-03",
+    },
+}
+
 def _normalize_name(player_name):
     return re.sub(r"[^a-zA-Z]", "", player_name).lower()
 
@@ -61,4 +72,22 @@ def _clean_matches(matches, birth_date):
 
     return df[(df["Player_Age"] >= 0) & (df["Opponent_Age"] >= 0)].copy()
 
+
+def _get_player_info(player_name):
+    normalized = _normalize_name(player_name)
+
+    if normalized not in PLAYER_INFO:
+        raise ValueError(f"Player '{player_name}' was not found.")
+
+    return PLAYER_INFO[normalized]
+
+def get_player_matches(player_name):
+    info = _get_player_info(player_name)
+
+    js_text = _download_matches(info["url_name"])
+    matches = _parse_matches(js_text)
+
+    birth_date = pd.Timestamp(info["birth_date"])
+
+    return _clean_matches(matches, birth_date)
 
