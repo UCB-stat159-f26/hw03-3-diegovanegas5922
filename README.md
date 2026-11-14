@@ -20,13 +20,13 @@ It also handles differences between male and female career match files. Female p
 The package can be installed directly from GitHub using pip:
 
 ```bash
-pip install git+https://github.com/diegovanegas5922/hw03-3-diegovanegas5922.git
+pip install git+https://github.com/UCB-stat159-f26/hw03-3-diegovanegas5922.git
 ```
 
 For local development, clone the repository and install it in editable mode:
 
 ```bash
-git clone https://github.com/diegovanegas5922/hw03-3-diegovanegas5922.git
+git clone https://github.com/UCB-stat159-f26/hw03-3-diegovanegas5922.git
 cd hw03-3-diegovanegas5922
 pip install -e ".[dev]"
 ```
